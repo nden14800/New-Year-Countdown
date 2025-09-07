@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新年カウントダウン</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS: 全てのスタイルをここに記述 */
+        :root {
+            --bg-color-light: #f0f2f5;
+            --text-color-light: #333;
+            --card-bg-light: rgba(255, 255, 255, 0.65);
+            --border-color-light: rgba(224, 224, 224, 0.5);
+            --accent-color-light: #007bff;
+            --fireworks-bg-light: rgba(240, 242, 245, 0.1);
+
+            --bg-color-dark: #121212;
+            --text-color-dark: #e0e0e0;
+            --card-bg-dark: rgba(0, 0, 0, 0.65);
+            --border-color-dark: rgba(68, 68, 68, 0.5);
+            --accent-color-dark: #4dabf7;
+            --fireworks-bg-dark: rgba(18, 18, 18, 0.1);
+        }
+
+        @media (prefers-color-scheme: light) {
+            body {
+                --bg-color: var(--bg-color-light);
+                --text-color: var(--text-color-light);
+                --card-bg: var(--card-bg-light);
+                --border-color: var(--border-color-light);
+                --accent-color: var(--accent-color-light);
+                --fireworks-bg: var(--fireworks-bg-light);
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                --bg-color: var(--bg-color-dark);
+                --text-color: var(--text-color-dark);
+                --card-bg: var(--card-bg-dark);
+                --border-color: var(--border-color-dark);
+                --accent-color: var(--accent-color-dark);
+                --fireworks-bg: var(--fireworks-bg-dark);
+            }
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+            overflow: hidden;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            background-color: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            /* 修正点: カードの最大幅を2倍にする */
+            max-width: 760px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            /* 修正点: スクロール機能を実装 */
+            max-height: 90vh; /* 画面高の90%を上限とする */
+            overflow-y: auto; /* コンテンツがはみ出たらスクロールバーを表示 */
+        }
+        
+        .container.hidden {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        #fireworks-info {
+            background-color: rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: all 0.5s ease-in-out;
+            overflow: hidden;
+            max-height: 100px;
+        }
+        #fireworks-info.hidden {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-bottom: 0;
+            border: none;
+            visibility: hidden;
+        }
+        #fireworks-countdown-display {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        
+        #current-datetime-container {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        #current-datetime {
+            font-size: 1em;
+            line-height: 1.6;
+        }
+        
+        #current-datetime .time-display {
+            font-size: 1.1em;
+            font-weight: 300;
+            letter-spacing: 1px;
+            background-color: var(--bg-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin: 0 4px;
+            display: inline-block;
+            color: var(--accent-color);
+        }
+
+        #countdown-container {
+            margin-bottom: 15px;
+        }
+
+        #countdown {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .time-unit {
+            background-color: var(--bg-color);
+            padding: 10px 15px;
+            border-radius: 8px;
+            min-width: 90px;
+        }
+
+        .time-unit .number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+        
+        .time-unit .label {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .progress-section {
+            padding: 20px 0;
+            margin-bottom: 20px;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .toggle-switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        .progress-stats {
+            display: grid;
+            /* 修正点: 横幅が広がったためレイアウトを戻す */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        
+        .stat-display {
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--accent-color);
+            word-break: break-all;
+        }
+        .stat-value-fraction {
+            font-size: 1.5em;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+        
+        .stat-control {
+            margin-top: 15px;
+            text-align: left;
+        }
+        
+        .stat-control label {
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .setting {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+            text-align: left;
+            overflow: hidden;
+            transition: all 0.5s ease-in-out;
+            max-height: 100px;
+        }
+        
+        .setting.hidden {
+            max-height: 0 !important;
+            opacity: 0;
+            padding: 0;
+            margin: 0;
+            border: none;
+            visibility: hidden;
+        }
+
+        label {
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Roboto', sans-serif;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button-group button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            font-weight: 700;
+            transition: opacity 0.2s;
+        }
+
+        .button-group button:hover {
+            opacity: 0.85;
+        }
+
+        .controls-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            width: 90%;
+            max-width: 300px;
+        }
+
+        #toggle-visibility-btn {
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        #fireworks-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+            display: none;
+        }
+        
+        #new-year-message {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--accent-color);
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>新年カウントダウン</h1>
+
+        <div id="fireworks-info" class="hidden">
+            <div id="fireworks-countdown-display"></div>
+        </div>
+
+        <div id="current-datetime-container">
+            <div id="current-datetime"></div>
+        </div>
+
+        <div id="countdown-container">
+            <h2 id="countdown-title">新年まであと</h2>
+            <div id="countdown">
+                <div class="time-unit"><span class="number" id="days">0</span><span class="label">日</span></div>
+                <div class="time-unit"><span class="number" id="hours">0</span><span class="label">時間</span></div>
+                <div class="time-unit"><span class="number" id="minutes">0</span><span class="label">分</span></div>
+                <div class="time-unit"><span class="number" id="seconds">0</span><span class="label">秒</span></div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="toggle-switch-container">
+                <span>経過</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="progress-mode-toggle">
+                    <span class="slider"></span>
+                </label>
+                <span>残り</span>
+            </div>
+
+            <div class="progress-stats">
+                <div class="stat-display">
+                    <div class="stat-value" id="year-percentage-value">0%</div>
+                    <div class="stat-label" id="year-percentage-label">今年の経過率</div>
+                    <div class="stat-control">
+                        <label for="percentage-digits-slider">表示桁数: <span id="percentage-digits-display">4</span></label>
+                        <input type="range" id="percentage-digits-slider" min="2" max="10" value="4">
+                    </div>
+                </div>
+                <div class="stat-display">
+                    <div class="stat-value stat-value-fraction" id="year-fraction-value">1 / ∞</div>
+                    <div class="stat-label" id="year-fraction-label">が経過しました</div>
+                    <div class="stat-control">
+                        <label for="fraction-digits-slider">表示桁数: <span id="fraction-digits-display">4</span></label>
+                        <input type="range" id="fraction-digits-slider" min="1" max="10" value="4">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-grid">
+            <div class="setting">
+                <label for="timezone-select">タイムゾーン:</label>
+                <select id="timezone-select"></select>
+            </div>
+            <div class="setting">
+                <label for="current-time-precision">時刻の表示精度:</label>
+                <select id="current-time-precision">
+                    <option value="60000,0">1分ごと</option>
+                    <option value="1000,0" selected>1秒ごと</option>
+                    <option value="100,1">0.1秒ごと</option>
+                    <option value="10,2">0.01秒ごと</option>
+                    <option value="1,3">0.001秒ごと</option>
+                </select>
+            </div>
+             <div class="setting">
+                <label for="countdown-precision">カウントダウンの精度:</label>
+                <select id="countdown-precision">
+                    <option value="1000,0" selected>1秒ごと</option>
+                    <option value="100,1">0.1秒ごと</option>
+                    <option value="10,2">0.01秒ごと</option>
+                    <option value="1,3">0.001秒ごと</option>
+                </select>
+            </div>
+            <div class="setting hidden" id="fireworks-countdown-setting">
+                <label for="fireworks-countdown-precision">花火カウントダウンの精度:</label>
+                <select id="fireworks-countdown-precision">
+                    <option value="1000,0" selected>1秒ごと</option>
+                    <option value="100,1">0.1秒ごと</option>
+                    <option value="10,2">0.01秒ごと</option>
+                    <option value="1,3">0.001秒ごと</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button id="test-fireworks-btn">花火をテストする</button>
+        </div>
+    </div>
+
+    <div class="controls-container">
+        <button id="toggle-visibility-btn">カードを非表示</button>
+    </div>
+
+    <canvas id="fireworks-canvas"></canvas>
+    
+    <script>
+        // JavaScript: 全てのロジックをここに記述
+
+        const containerEl = document.querySelector('.container');
+        const currentDatetimeEl = document.getElementById('current-datetime');
+        const countdownContainer = document.getElementById('countdown-container');
+        const timezoneSelect = document.getElementById('timezone-select');
+        const currentTimePrecisionSelect = document.getElementById('current-time-precision');
+        const countdownPrecisionSelect = document.getElementById('countdown-precision');
+        const testFireworksBtn = document.getElementById('test-fireworks-btn');
+        const toggleVisibilityBtn = document.getElementById('toggle-visibility-btn');
+        const canvas = document.getElementById('fireworks-canvas');
+        const ctx = canvas.getContext('2d');
+        const fireworksInfoEl = document.getElementById('fireworks-info');
+        const fireworksCountdownDisplayEl = document.getElementById('fireworks-countdown-display');
+        const fireworksCountdownSettingEl = document.getElementById('fireworks-countdown-setting');
+        const fireworksCountdownPrecisionSelect = document.getElementById('fireworks-countdown-precision');
+
+        const progressModeToggle = document.getElementById('progress-mode-toggle');
+        const yearPercentageValueEl = document.getElementById('year-percentage-value');
+        const yearPercentageLabelEl = document.getElementById('year-percentage-label');
+        const percentageDigitsSlider = document.getElementById('percentage-digits-slider');
+        const percentageDigitsDisplay = document.getElementById('percentage-digits-display');
+        const yearFractionValueEl = document.getElementById('year-fraction-value');
+        const yearFractionLabelEl = document.getElementById('year-fraction-label');
+        const fractionDigitsSlider = document.getElementById('fraction-digits-slider');
+        const fractionDigitsDisplay = document.getElementById('fraction-digits-display');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let fireworks = [], particles = [];
+        let fireworksAnimationId = null;
+        let mainFireworksTimeoutId = null;
+        let isStoppingFireworks = false;
+        let isTestFireworks = false;
+        let fireworksStartTime = 0;
+        let fireworksCountdownDuration = 0;
+        const FIREWORKS_DURATION = 600000;
+
+        let currentTimeInterval, countdownInterval, fireworksCountdownInterval;
+        let selectedTimezoneOffset = new Date().getTimezoneOffset() / -60;
+        const weekDays = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'];
+
+        function populateTimezones() {
+            for (let i = 14; i >= -12; i--) {
+                const option = document.createElement('option');
+                option.value = i;
+                const sign = i >= 0 ? '+' : '-';
+                option.textContent = `UTC${sign}${String(Math.abs(i)).padStart(2, '0')}:00`;
+                timezoneSelect.appendChild(option);
+            }
+            const localOffset = new Date().getTimezoneOffset() / -60;
+            timezoneSelect.value = Math.round(localOffset);
+            selectedTimezoneOffset = parseInt(timezoneSelect.value);
+        }
+
+        function getTargetDate() {
+            const now = new Date();
+            const nowUtc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const nowInSelectedTz = new Date(nowUtc + (selectedTimezoneOffset * 3600000));
+            let targetYear = nowInSelectedTz.getFullYear();
+            const newYearInSelectedTz = new Date(Date.UTC(targetYear, 0, 1)).getTime() - (selectedTimezoneOffset * 3600000);
+            if (now.getTime() >= newYearInSelectedTz) {
+                targetYear++;
+            }
+            const targetDateUtc = new Date(Date.UTC(targetYear, 0, 1, 0, 0, 0));
+            return new Date(targetDateUtc.getTime() - (selectedTimezoneOffset * 3600000));
+        }
+
+        function updateCurrentTime() {
+            const now = new Date();
+            const nowUtc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const nowInSelectedTz = new Date(nowUtc + (selectedTimezoneOffset * 3600000));
+            const [interval, precision] = currentTimePrecisionSelect.value.split(',').map(Number);
+            let timeString = `${String(nowInSelectedTz.getHours()).padStart(2, '0')}:${String(nowInSelectedTz.getMinutes()).padStart(2, '0')}`;
+            if (interval <= 1000) timeString += `:${String(nowInSelectedTz.getSeconds()).padStart(2, '0')}`;
+            if (interval < 1000) timeString += `.${String(nowInSelectedTz.getMilliseconds()).padStart(3, '0').substring(0, precision)}`;
+            const datePart = `今日は ${nowInSelectedTz.getFullYear()}年${nowInSelectedTz.getMonth() + 1}月${nowInSelectedTz.getDate()}日 ${weekDays[nowInSelectedTz.getDay()]}`;
+            currentDatetimeEl.innerHTML = `${datePart} <span class="time-display">${timeString}</span> です`;
+            
+            updateProgressStats();
+        }
+
+        function updateCountdown() {
+            const now = new Date();
+            const currentYearInTz = new Date(now.getTime() + (selectedTimezoneOffset * 3600000)).getUTCFullYear();
+            const thisYearStart = new Date(Date.UTC(currentYearInTz, 0, 1) - selectedTimezoneOffset * 3600000);
+            const diffFromNewYear = now - thisYearStart;
+            
+            if (diffFromNewYear >= 0 && diffFromNewYear < FIREWORKS_DURATION) {
+                if (!fireworksAnimationId) launchFireworks();
+                if (!document.getElementById('new-year-message')) {
+                    countdownContainer.innerHTML = `<div id="new-year-message">🎉 HAPPY NEW YEAR! 🎉</div>`;
+                }
+            } else {
+                if (fireworksAnimationId && !isStoppingFireworks && !isTestFireworks) {
+                    stopFireworks();
+                }
+                const targetDate = getTargetDate();
+                const diffToNewYear = targetDate - now;
+                if (document.getElementById('new-year-message') || !document.getElementById('countdown')) {
+                    countdownContainer.innerHTML = `
+                        <h2 id="countdown-title">新年まであと</h2>
+                        <div id="countdown">
+                            <div class="time-unit"><span class="number" id="days">0</span><span class="label">日</span></div>
+                            <div class="time-unit"><span class="number" id="hours">0</span><span class="label">時間</span></div>
+                            <div class="time-unit"><span class="number" id="minutes">0</span><span class="label">分</span></div>
+                            <div class="time-unit"><span class="number" id="seconds">0</span><span class="label">秒</span></div>
+                        </div>`;
+                }
+                updateCountdownDisplay(diffToNewYear);
+            }
+        }
+        
+        function updateCountdownDisplay(diff) {
+            const [_, precision] = countdownPrecisionSelect.value.split(',').map(Number);
+            const s = (diff % 60000) / 1000;
+            if (document.getElementById('days')) {
+                document.getElementById('days').textContent = String(Math.floor(diff / 86400000)).padStart(2, '0');
+                document.getElementById('hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
+                document.getElementById('minutes').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+                document.getElementById('seconds').textContent = s.toFixed(precision).padStart(2 + (precision > 0 ? 1 : 0) + precision, '0');
+            }
+        }
+        
+        function formatNumberToTotalDigits(num, totalDigits) {
+            if (num === 0) return '0';
+            const numStr = num.toString();
+            const integerPartLength = numStr.includes('.') ? numStr.split('.')[0].length : numStr.length;
+            
+            if (totalDigits <= integerPartLength) {
+                return Math.floor(num).toString();
+            }
+            const decimalPlaces = totalDigits - integerPartLength;
+            return num.toFixed(decimalPlaces);
+        }
+
+        function updateProgressStats() {
+            const now = new Date();
+            const nowUtc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const nowInSelectedTz = new Date(nowUtc + (selectedTimezoneOffset * 3600000));
+
+            const year = nowInSelectedTz.getFullYear();
+            const startOfYear = new Date(Date.UTC(year, 0, 1) - selectedTimezoneOffset * 3600000);
+            const startOfNextYear = new Date(Date.UTC(year + 1, 0, 1) - selectedTimezoneOffset * 3600000);
+            
+            const totalMsInYear = startOfNextYear - startOfYear;
+            const elapsedMs = now - startOfYear;
+            
+            let percentage = (elapsedMs / totalMsInYear) * 100;
+            
+            const isRemainingMode = progressModeToggle.checked;
+            
+            if (isRemainingMode) {
+                percentage = 100 - percentage;
+                yearPercentageLabelEl.textContent = "今年の残り率";
+                yearFractionLabelEl.textContent = "が残っています";
+            } else {
+                yearPercentageLabelEl.textContent = "今年の経過率";
+                yearFractionLabelEl.textContent = "が経過しました";
+            }
+            
+            const percentageDigits = parseInt(percentageDigitsSlider.value);
+            const formattedPercentage = formatNumberToTotalDigits(percentage, percentageDigits);
+            yearPercentageValueEl.textContent = `${formattedPercentage}%`;
+            
+            let fractionDenominator;
+            if (isRemainingMode) {
+                fractionDenominator = totalMsInYear / (totalMsInYear - elapsedMs);
+            } else {
+                fractionDenominator = elapsedMs > 0 ? totalMsInYear / elapsedMs : Infinity;
+            }
+
+            const fractionDigits = parseInt(fractionDigitsSlider.value);
+            const formattedFraction = fractionDenominator === Infinity ? '∞' : formatNumberToTotalDigits(fractionDenominator, fractionDigits);
+            yearFractionValueEl.innerHTML = `1 / <span>${formattedFraction}</span>`;
+        }
+
+        function setupIntervals() {
+            clearInterval(currentTimeInterval);
+            clearInterval(countdownInterval);
+            const [currentTimeRate] = currentTimePrecisionSelect.value.split(',').map(Number);
+            currentTimeInterval = setInterval(updateCurrentTime, currentTimeRate);
+            const [countdownRate] = countdownPrecisionSelect.value.split(',').map(Number);
+            countdownInterval = setInterval(updateCountdown, countdownRate);
+            updateCurrentTime();
+            updateCountdown();
+        }
+
+        class Firework {
+            constructor() { this.x = Math.random() * canvas.width; this.y = canvas.height; this.targetY = Math.random() * (canvas.height / 2) + (canvas.height / 4); this.speed = Math.random() * 3 + 4; this.velY = -this.speed; this.hue = Math.random() * 360; this.brightness = Math.random() * 20 + 50; }
+            update() { this.y += this.velY; this.velY += 0.05; if (this.velY >= 0) { createParticles(this.x, this.y, this.hue); return true; } return false; }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, 3, 0, Math.PI * 2); ctx.fillStyle = `hsl(${this.hue}, 100%, ${this.brightness}%)`; ctx.fill(); }
+        }
+        class Particle {
+            constructor(x, y, hue) { this.x = x; this.y = y; this.hue = hue; this.angle = Math.random() * Math.PI * 2; this.speed = Math.random() * 8 + 1; this.velX = Math.cos(this.angle) * this.speed; this.velY = Math.sin(this.angle) * this.speed; this.brightness = Math.random() * 30 + 50; this.alpha = 1; this.decay = Math.random() * 0.02 + 0.015; this.gravity = 0.1; this.friction = 0.98; }
+            update() { this.velX *= this.friction; this.velY *= this.friction; this.velY += this.gravity; this.x += this.velX; this.y += this.velY; this.alpha -= this.decay; return this.alpha <= this.decay; }
+            draw() { ctx.beginPath(); ctx.arc(this.x, this.y, 2, 0, Math.PI * 2); ctx.fillStyle = `hsla(${this.hue}, 100%, ${this.brightness}%, ${this.alpha})`; ctx.fill(); }
+        }
+        function createParticles(x, y, hue) { const particleCount = Math.random() * 100 + 150; for (let i = 0; i < particleCount; i++) particles.push(new Particle(x, y, hue)); }
+
+        function launchFireworks(isTest = false) {
+            if (fireworksAnimationId) return;
+            isStoppingFireworks = false;
+            isTestFireworks = isTest;
+            fireworksStartTime = Date.now();
+            fireworksCountdownDuration = isTest ? 15000 : FIREWORKS_DURATION;
+            canvas.style.display = 'block';
+            animateFireworks();
+            startFireworksCountdown();
+            if(mainFireworksTimeoutId) clearTimeout(mainFireworksTimeoutId);
+            mainFireworksTimeoutId = setTimeout(stopFireworks, fireworksCountdownDuration);
+        }
+
+        function stopFireworks() {
+            isStoppingFireworks = true;
+            clearTimeout(mainFireworksTimeoutId);
+            mainFireworksTimeoutId = null;
+            stopFireworksCountdown();
+            isTestFireworks = false;
+        }
+
+        function animateFireworks() {
+            fireworksAnimationId = requestAnimationFrame(animateFireworks);
+            const fireworksBgColor = getComputedStyle(document.body).getPropertyValue('--fireworks-bg').trim();
+            ctx.fillStyle = fireworksBgColor || 'rgba(0, 0, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!isStoppingFireworks && Math.random() < 0.08) fireworks.push(new Firework());
+            fireworks = fireworks.filter(fw => !fw.update());
+            particles = particles.filter(p => !p.update());
+            fireworks.forEach(fw => fw.draw());
+            particles.forEach(p => p.draw());
+            if (isStoppingFireworks && fireworks.length === 0 && particles.length === 0) {
+                cancelAnimationFrame(fireworksAnimationId);
+                fireworksAnimationId = null;
+                canvas.style.display = 'none';
+            }
+        }
+
+        function startFireworksCountdown() {
+            fireworksInfoEl.classList.remove('hidden');
+            fireworksCountdownSettingEl.classList.remove('hidden');
+            setupFireworksCountdownInterval();
+        }
+        function stopFireworksCountdown() {
+            fireworksInfoEl.classList.add('hidden');
+            fireworksCountdownSettingEl.classList.add('hidden');
+            clearInterval(fireworksCountdownInterval);
+            fireworksCountdownInterval = null;
+        }
+        function updateFireworksCountdown() {
+            const remaining = Math.max(0, fireworksCountdownDuration - (Date.now() - fireworksStartTime));
+            const [_, precision] = fireworksCountdownPrecisionSelect.value.split(',').map(Number);
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = (remaining % 60000) / 1000;
+            const formattedTime = `${String(minutes).padStart(2, '0')}:${seconds.toFixed(precision).padStart(2 + (precision > 0 ? 1 : 0) + precision, '0')}`;
+            fireworksCountdownDisplayEl.textContent = `花火終了まで: ${formattedTime}`;
+        }
+        function setupFireworksCountdownInterval() {
+            if(fireworksCountdownInterval) clearInterval(fireworksCountdownInterval);
+            const [rate] = fireworksCountdownPrecisionSelect.value.split(',').map(Number);
+            fireworksCountdownInterval = setInterval(updateFireworksCountdown, rate);
+            updateFireworksCountdown();
+        }
+
+        function setupEventListeners() {
+            timezoneSelect.addEventListener('change', () => { selectedTimezoneOffset = parseInt(timezoneSelect.value); setupIntervals(); });
+            currentTimePrecisionSelect.addEventListener('change', setupIntervals);
+            countdownPrecisionSelect.addEventListener('change', setupIntervals);
+            fireworksCountdownPrecisionSelect.addEventListener('change', setupFireworksCountdownInterval);
+            window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+            testFireworksBtn.addEventListener('click', () => { if (fireworksAnimationId) return; launchFireworks(true); });
+
+            toggleVisibilityBtn.addEventListener('click', () => {
+                containerEl.classList.toggle('hidden');
+                toggleVisibilityBtn.textContent = containerEl.classList.contains('hidden') ? 'カードを表示' : 'カードを非表示';
+            });
+
+            progressModeToggle.addEventListener('change', updateProgressStats);
+            percentageDigitsSlider.addEventListener('input', () => {
+                percentageDigitsDisplay.textContent = percentageDigitsSlider.value;
+                updateProgressStats();
+            });
+            fractionDigitsSlider.addEventListener('input', () => {
+                fractionDigitsDisplay.textContent = fractionDigitsSlider.value;
+                updateProgressStats();
+            });
+        }
+
+        function init() {
+            populateTimezones();
+            setupEventListeners();
+            setupIntervals();
+            updateProgressStats();
+        }
+
+        init();
+    </script>
+</body>
+</html>
