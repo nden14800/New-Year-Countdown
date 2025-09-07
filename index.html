@@ -855,9 +855,11 @@
             } catch (error) {
                 console.error('Error populating timezones:', error);
                 timezoneSelect.innerHTML = '';
+                // UTC+14からUTC-12までのフォールバックリストを生成
                 for (let i = 14; i >= -12; i--) {
                     const option = document.createElement('option');
                     const sign = i >= 0 ? '+' : '-';
+                    // Etc/GMTの仕様では符号が逆になる (例: UTC+5はEtc/GMT-5)
                     const offsetString = `Etc/GMT${sign === '+' ? '-' : '+'}${Math.abs(i)}`;
                     option.value = offsetString;
                     option.textContent = `UTC${sign}${String(Math.abs(i)).padStart(2, '0')}:00`;
@@ -894,12 +896,21 @@
                 console.log(`Time synced with server. Offset: ${timeOffset}ms. Timezone: ${selectedTimezone}`);
             } catch (error) {
                 console.error('Failed to sync time with server:', error);
-                timeOffset = 0;
+                timeOffset = 0; // フォールバック: 端末時刻を使用
                 syncErrorMessage.style.display = 'block';
                 timeOffsetDisplay.style.display = 'none';
+
+                // ▼▼▼【修正箇所】▼▼▼
+                // 失敗した場合、タイムゾーンは現在ドロップダウンで選択されている値を使用する。
+                // これにより、表示エラーを防ぎ、ユーザーがタイムゾーンを選択できるようになる。
+                selectedTimezone = timezoneSelect.value;
+                // ▲▲▲【修正箇所】▲▲▲
+
             } finally {
                 loadingOverlay.classList.remove('visible');
+                // 成功時も失敗時も、ユーザーがタイムゾーンを変更できるように必ず有効化する
                 timezoneSelect.disabled = false;
+                // タイマーを開始する（同期された時刻、またはフォールバックの端末時刻で）
                 setupIntervals();
             }
         }
@@ -1164,7 +1175,14 @@
             timezoneSelect.addEventListener('change', () => { 
                 const newTimezone = timezoneSelect.value;
                 if (newTimezone !== selectedTimezone) {
-                    syncTimeWithServer(newTimezone);
+                    // サーバーとの同期が失敗している場合は、時刻の再同期はせず、
+                    // 選択されたタイムゾーンだけを更新して表示を再計算する
+                    if (syncErrorMessage.style.display === 'block') {
+                        selectedTimezone = newTimezone;
+                        setupIntervals(); // 表示を更新
+                    } else {
+                        syncTimeWithServer(newTimezone);
+                    }
                 }
             });
             currentTimePrecisionSelect.addEventListener('change', setupIntervals);
