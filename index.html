@@ -8,6 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     
+    <!-- KaTeX: 数式表示用ライブラリ -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+        onload="renderMathInElement(document.body, { delimiters: [ {left: '$$', right: '$$', display: true}, {left: '\\[', right: '\\]', display: true}, {left: '$', right: '$', display: false}, {left: '\\(', right: '\\)', display: false} ] });"></script>
+
     <style>
         /* CSS: 全てのスタイルをここに記述 */
         :root {
@@ -515,6 +521,8 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
         .offset-modal.visible {
             opacity: 1;
@@ -528,6 +536,7 @@
             padding-bottom: 15px;
             margin-bottom: 15px;
             border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
         .modal-header h3 {
             margin: 0;
@@ -554,6 +563,8 @@
             text-align: left;
             font-size: 0.95em;
             line-height: 1.6;
+            overflow-y: auto;
+            max-height: 70vh;
         }
         .modal-content table {
             width: 100%;
@@ -568,6 +579,9 @@
         .modal-content th {
             background-color: var(--bg-color);
             font-weight: bold;
+        }
+        .katex-display {
+            margin: 0.5em 0;
         }
 
         @keyframes fadeIn {
@@ -719,13 +733,13 @@
                 <tbody>
                     <tr>
                         <td><strong>+</strong> (プラス)</td>
-                        <td>サーバーより進んでいる</td>
-                        <td><strong>未来</strong>の時刻を指しています。</td>
+                        <td>サーバーより遅れている</td>
+                        <td><strong>過去</strong>の時刻を指しています。</td>
                     </tr>
                     <tr>
                         <td><strong>-</strong> (マイナス)</td>
-                        <td>サーバーより遅れている</td>
-                        <td><strong>過去</strong>の時刻を指しています。</td>
+                        <td>サーバーより進んでいる</td>
+                        <td><strong>未来</strong>の時刻を指しています。</td>
                     </tr>
                      <tr>
                         <td><strong>0</strong></td>
@@ -734,6 +748,36 @@
                     </tr>
                 </tbody>
             </table>
+            <div style="margin-top: 15px; padding: 12px; border-radius: 6px; background-color: var(--bg-color); border: 1px solid var(--border-color);">
+                <h4 style="margin: 0 0 8px 0; font-size: 1em; color: var(--accent-color);">なぜ符号の意味が直感と逆なの？</h4>
+                <p style="margin: 0 0 8px 0; font-size: 0.9em; line-height: 1.6;">
+                    この誤差は<strong>「サーバー時刻 - あなたの端末の時刻」</strong>という計算式で算出されているためです。
+                </p>
+                <p style="margin: 0; font-size: 0.9em; line-height: 1.6;">
+                    文字式で表すと以下のようになります。
+                </p>
+                $$ \Delta t = t_{server} - t_{client} $$
+                <ul style="margin: 8px 0 8px 0; padding-left: 20px; font-size: 0.85em; list-style-type: none;">
+                    <li>$\Delta t$: 計算された誤差 (Offset)</li>
+                    <li>$t_{server}$: 正確なサーバー時刻</li>
+                    <li>$t_{client}$: あなたの端末の時刻</li>
+                </ul>
+                <div style="margin: 8px 0 0 0; padding-top: 8px; border-top: 1px solid var(--border-color);">
+                    <strong style="font-size: 0.9em;">具体例:</strong>
+                    <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 0.9em; line-height: 1.6;">
+                        <li style="margin-bottom: 10px;">
+                            <strong>あなたの端末が <span style="color: var(--accent-color);">遅れている</span> 場合 (結果がプラス):</strong><br>
+                            サーバーが <code style="font-family: 'Roboto', monospace; background: var(--bg-color); padding: 1px 4px; border-radius: 3px;">10:00:30</code> で、あなたの端末が <code style="font-family: 'Roboto', monospace; background: var(--bg-color); padding: 1px 4px; border-radius: 3px;">10:00:00</code> だとします。<br>
+                            計算は「サーバー - 端末」なので $10:00:30 - 10:00:00 = +30$秒。誤差は<strong>プラス</strong>になります。
+                        </li>
+                        <li>
+                            <strong>あなたの端末が <span style="color: var(--error-color);">進んでいる</span> 場合 (結果がマイナス):</strong><br>
+                            サーバーが <code style="font-family: 'Roboto', monospace; background: var(--bg-color); padding: 1px 4px; border-radius: 3px;">10:00:00</code> で、あなたの端末が <code style="font-family: 'Roboto', monospace; background: var(--bg-color); padding: 1px 4px; border-radius: 3px;">10:00:30</code> だとします。<br>
+                            計算は「サーバー - 端末」なので $10:00:00 - 10:00:30 = -30$秒。誤差は<strong>マイナス</strong>になります。
+                        </li>
+                    </ul>
+                </div>
+            </div>
             <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">このアプリケーションは、計算された誤差を自動的に補正して、常に正確な時刻を表示するように努めています。</p>
         </div>
     </div>
