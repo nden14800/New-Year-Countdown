@@ -13,17 +13,23 @@
         :root {
             --bg-color-light: #f0f2f5;
             --text-color-light: #333;
-            --card-bg-light: rgba(255, 255, 255, 0.65);
+            --card-bg-light: rgba(255, 255, 255, 0.75);
             --border-color-light: rgba(224, 224, 224, 0.5);
             --accent-color-light: #007bff;
             --fireworks-bg-light: rgba(240, 242, 245, 0.1);
+            --error-color-light: #dc3545;
+            --spinner-color-light: #007bff;
+            --modal-bg-light: rgba(255, 255, 255, 0.85);
 
             --bg-color-dark: #121212;
             --text-color-dark: #e0e0e0;
-            --card-bg-dark: rgba(0, 0, 0, 0.65);
+            --card-bg-dark: rgba(0, 0, 0, 0.75);
             --border-color-dark: rgba(68, 68, 68, 0.5);
             --accent-color-dark: #4dabf7;
             --fireworks-bg-dark: rgba(18, 18, 18, 0.1);
+            --error-color-dark: #f87171;
+            --spinner-color-dark: #1a73e8;
+            --modal-bg-dark: rgba(30, 30, 30, 0.85);
         }
 
         @media (prefers-color-scheme: light) {
@@ -34,6 +40,9 @@
                 --border-color: var(--border-color-light);
                 --accent-color: var(--accent-color-light);
                 --fireworks-bg: var(--fireworks-bg-light);
+                --error-color: var(--error-color-light);
+                --spinner-color: var(--spinner-color-light);
+                --modal-bg: var(--modal-bg-light);
             }
         }
 
@@ -45,6 +54,9 @@
                 --border-color: var(--border-color-dark);
                 --accent-color: var(--accent-color-dark);
                 --fireworks-bg: var(--fireworks-bg-dark);
+                --error-color: var(--error-color-dark);
+                --spinner-color: var(--spinner-color-dark);
+                --modal-bg: var(--modal-bg-dark);
             }
         }
 
@@ -90,6 +102,99 @@
             opacity: 0;
             transform: translateY(20px) scale(0.95);
             pointer-events: none;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            border-radius: 12px;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            gap: 20px;
+        }
+        .loading-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loader {
+            width: 60px;
+            height: 60px;
+            animation: rotate 1s linear infinite;
+            transform-origin: center center;
+        }
+        .loader .path {
+            stroke: var(--spinner-color);
+            stroke-linecap: round;
+            stroke-dasharray: 89 150;
+            stroke-dashoffset: 0;
+        }
+        @keyframes rotate {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #sync-error-message {
+            color: var(--error-color);
+            background-color: rgba(255, 0, 0, 0.1);
+            border: 1px solid var(--error-color);
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none; /* 初期状態は非表示 */
+        }
+        
+        #time-offset-display {
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.9;
+            background-color: var(--bg-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            display: none; /* 初期状態は非表示 */
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            line-height: 1.5;
+            width: fit-content;
+        }
+        
+        .info-button {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .info-button:hover {
+            opacity: 1;
+        }
+        .info-button svg {
+            width: 16px;
+            height: 16px;
         }
 
         h1 {
@@ -316,6 +421,11 @@
             cursor: pointer;
         }
         
+        select:disabled, button:disabled {
+             opacity: 0.6;
+             cursor: not-allowed;
+        }
+
         .button-group {
             display: grid;
             grid-template-columns: 1fr;
@@ -330,11 +440,7 @@
             font-weight: 700;
             transition: opacity 0.2s, background-color 0.2s;
         }
-        .button-group button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
+        
         .button-group button:hover:not(:disabled) {
             opacity: 0.85;
         }
@@ -373,6 +479,96 @@
             color: var(--accent-color);
             animation: fadeIn 1.5s ease-out;
         }
+        
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-backdrop.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .offset-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            z-index: 1001;
+            background-color: var(--modal-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border-color);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+        }
+        .offset-modal.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2em;
+            color: var(--accent-color);
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            width: auto;
+            padding: 0;
+            cursor: pointer;
+            color: var(--text-color);
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close-btn:hover {
+            opacity: 1;
+        }
+        .modal-content {
+            text-align: left;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        .modal-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .modal-content th, .modal-content td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+        }
+        .modal-content th {
+            background-color: var(--bg-color);
+            font-weight: bold;
+        }
 
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -383,7 +579,27 @@
 <body>
 
     <div class="container">
+        <div class="loading-overlay" id="loading-overlay">
+            <svg class="loader" viewBox="0 0 50 50">
+                <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="2.5"></circle>
+            </svg>
+            <p>時刻を同期中...</p>
+        </div>
+        
         <h1>新年カウントダウン</h1>
+
+        <div id="sync-error-message">
+            サーバーとの時刻同期に失敗しました。お使いの端末の時刻で表示しています。
+        </div>
+
+        <div id="time-offset-display">
+            <span id="offset-text"></span>
+            <button id="offset-info-btn" class="info-button" aria-label="誤差についての詳細">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2"/>
+                </svg>
+            </button>
+        </div>
 
         <div id="fireworks-info" class="hidden">
             <div id="fireworks-countdown-display"></div>
@@ -436,7 +652,7 @@
         <div class="settings-grid">
             <div class="setting">
                 <label for="timezone-select">タイムゾーン:</label>
-                <select id="timezone-select"></select>
+                <select id="timezone-select" disabled></select>
             </div>
             <div class="setting">
                 <label for="current-time-precision">時刻の表示精度:</label>
@@ -470,7 +686,6 @@
         
         <div class="button-group">
             <button id="test-fireworks-btn">花火をテストする</button>
-            <!-- 修正点: 新しいボタンを追加 -->
             <button id="test-new-year-btn">新年をテストする</button>
         </div>
     </div>
@@ -480,6 +695,48 @@
     </div>
 
     <canvas id="fireworks-canvas"></canvas>
+
+    <div class="modal-backdrop" id="offset-modal-backdrop"></div>
+    <div class="offset-modal" id="offset-info-modal">
+        <div class="modal-header">
+            <h3>時刻の誤差について</h3>
+            <button class="modal-close-btn" id="modal-close-btn" aria-label="閉じる">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-content">
+            <p>この値は、正確な時刻を提供している <strong>WorldTimeAPI</strong> サーバーと、あなたのデバイス（PCやスマートフォン）の内部時計との時刻の差（ズレ）をミリ秒単位で示しています。</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>符号</th>
+                        <th>意味</th>
+                        <th>あなたの端末の時計は...</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>+</strong> (プラス)</td>
+                        <td>サーバーより進んでいる</td>
+                        <td><strong>未来</strong>の時刻を指しています。</td>
+                    </tr>
+                    <tr>
+                        <td><strong>-</strong> (マイナス)</td>
+                        <td>サーバーより遅れている</td>
+                        <td><strong>過去</strong>の時刻を指しています。</td>
+                    </tr>
+                     <tr>
+                        <td><strong>0</strong></td>
+                        <td>ズレなし</td>
+                        <td>サーバーと<strong>完全に同期</strong>しています。</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 15px; font-size: 0.9em; opacity: 0.8;">このアプリケーションは、計算された誤差を自動的に補正して、常に正確な時刻を表示するように努めています。</p>
+        </div>
+    </div>
     
     <script>
         // JavaScript: 全てのロジックをここに記述
@@ -507,9 +764,15 @@
         const yearFractionLabelEl = document.getElementById('year-fraction-label');
         const fractionDigitsSlider = document.getElementById('fraction-digits-slider');
         const fractionDigitsDisplay = document.getElementById('fraction-digits-display');
-        
-        // 修正点: 新しいボタンのDOM要素を取得
         const testNewYearBtn = document.getElementById('test-new-year-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const syncErrorMessage = document.getElementById('sync-error-message');
+        const timeOffsetDisplay = document.getElementById('time-offset-display');
+        const offsetTextEl = document.getElementById('offset-text');
+        const offsetInfoBtn = document.getElementById('offset-info-btn');
+        const offsetModal = document.getElementById('offset-info-modal');
+        const offsetModalBackdrop = document.getElementById('offset-modal-backdrop');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -524,56 +787,112 @@
         const FIREWORKS_DURATION = 600000;
 
         let currentTimeInterval, countdownInterval, fireworksCountdownInterval;
-        let selectedTimezoneOffset = new Date().getTimezoneOffset() / -60;
-        const weekDays = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'];
+        let timeOffset = 0; // サーバー時刻とクライアント時刻の差 (ミリ秒)
+        let selectedTimezone = '';
 
-        function populateTimezones() {
-            for (let i = 14; i >= -12; i--) {
-                const option = document.createElement('option');
-                option.value = i;
-                const sign = i >= 0 ? '+' : '-';
-                option.textContent = `UTC${sign}${String(Math.abs(i)).padStart(2, '0')}:00`;
-                timezoneSelect.appendChild(option);
-            }
-            const localOffset = new Date().getTimezoneOffset() / -60;
-            timezoneSelect.value = Math.round(localOffset);
-            selectedTimezoneOffset = parseInt(timezoneSelect.value);
+        const weekDays = ['日曜日', '月曜日', '火曜日', '水曜日', '金曜日', '土曜日'];
+
+        function getCurrentSyncedTime() {
+            return new Date(new Date().getTime() + timeOffset);
         }
 
-        function getTargetDate() {
-            const now = new Date();
-            const nowUtc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const nowInSelectedTz = new Date(nowUtc + (selectedTimezoneOffset * 3600000));
-            let targetYear = nowInSelectedTz.getFullYear();
-            const newYearInSelectedTz = new Date(Date.UTC(targetYear, 0, 1)).getTime() - (selectedTimezoneOffset * 3600000);
-            if (now.getTime() >= newYearInSelectedTz) {
-                targetYear++;
+        async function populateTimezones() {
+            try {
+                const response = await fetch('https://worldtimeapi.org/api/timezone');
+                if (!response.ok) throw new Error('Failed to fetch timezones');
+                const timezones = await response.json();
+                timezoneSelect.innerHTML = '';
+                timezones.forEach(tz => {
+                    const option = document.createElement('option');
+                    option.value = tz;
+                    option.textContent = tz.replace(/_/g, ' ');
+                    timezoneSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error populating timezones:', error);
+                timezoneSelect.innerHTML = '';
+                for (let i = 14; i >= -12; i--) {
+                    const option = document.createElement('option');
+                    const sign = i >= 0 ? '+' : '-';
+                    const offsetString = `Etc/GMT${sign === '+' ? '-' : '+'}${Math.abs(i)}`;
+                    option.value = offsetString;
+                    option.textContent = `UTC${sign}${String(Math.abs(i)).padStart(2, '0')}:00`;
+                    timezoneSelect.appendChild(option);
+                }
             }
-            const targetDateUtc = new Date(Date.UTC(targetYear, 0, 1, 0, 0, 0));
-            return new Date(targetDateUtc.getTime() - (selectedTimezoneOffset * 3600000));
+        }
+        
+        async function syncTimeWithServer(timezone = null) {
+            loadingOverlay.classList.add('visible');
+            timezoneSelect.disabled = true;
+            syncErrorMessage.style.display = 'none';
+            timeOffsetDisplay.style.display = 'none';
+            const url = timezone ? `https://worldtimeapi.org/api/timezone/${timezone}` : 'https://worldtimeapi.org/api/ip';
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('API request failed');
+                const data = await response.json();
+                
+                const serverTime = new Date(data.datetime).getTime();
+                const clientTime = new Date().getTime();
+                timeOffset = serverTime - clientTime;
+
+                timeOffsetDisplay.style.display = 'flex';
+                let offsetMessage = `誤差は ${timeOffset > 0 ? '+' : ''}${timeOffset} ms です`;
+                offsetTextEl.textContent = offsetMessage;
+
+                selectedTimezone = data.timezone;
+                if (timezoneSelect.querySelector(`option[value="${selectedTimezone}"]`)) {
+                    timezoneSelect.value = selectedTimezone;
+                }
+                
+                console.log(`Time synced with server. Offset: ${timeOffset}ms. Timezone: ${selectedTimezone}`);
+            } catch (error) {
+                console.error('Failed to sync time with server:', error);
+                timeOffset = 0;
+                syncErrorMessage.style.display = 'block';
+                timeOffsetDisplay.style.display = 'none';
+            } finally {
+                loadingOverlay.classList.remove('visible');
+                timezoneSelect.disabled = false;
+                setupIntervals();
+            }
         }
 
         function updateCurrentTime() {
-            const now = new Date();
-            const nowUtc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const nowInSelectedTz = new Date(nowUtc + (selectedTimezoneOffset * 3600000));
+            const now = getCurrentSyncedTime();
+            
+            const options = {
+                timeZone: selectedTimezone,
+                year: 'numeric', month: 'numeric', day: 'numeric',
+                weekday: 'long', hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            };
+            const formatter = new Intl.DateTimeFormat('ja-JP', options);
+            const parts = formatter.formatToParts(now);
+
+            const getPart = (type) => parts.find(p => p.type === type)?.value || '';
+
+            const datePart = `今日は ${getPart('year')}年${getPart('month')}月${getPart('day')}日 ${getPart('weekday')}`;
             const [interval, precision] = currentTimePrecisionSelect.value.split(',').map(Number);
-            let timeString = `${String(nowInSelectedTz.getHours()).padStart(2, '0')}:${String(nowInSelectedTz.getMinutes()).padStart(2, '0')}`;
-            if (interval <= 1000) timeString += `:${String(nowInSelectedTz.getSeconds()).padStart(2, '0')}`;
-            if (interval < 1000) timeString += `.${String(nowInSelectedTz.getMilliseconds()).padStart(3, '0').substring(0, precision)}`;
-            const datePart = `今日は ${nowInSelectedTz.getFullYear()}年${nowInSelectedTz.getMonth() + 1}月${nowInSelectedTz.getDate()}日 ${weekDays[nowInSelectedTz.getDay()]}`;
+            
+            let timeString = `${getPart('hour')}:${getPart('minute')}`;
+            if (interval <= 1000) timeString += `:${getPart('second')}`;
+            if (interval < 1000) timeString += `.${String(now.getMilliseconds()).padStart(3, '0').substring(0, precision)}`;
+
             currentDatetimeEl.innerHTML = `${datePart} <span class="time-display">${timeString}</span> です`;
             
             updateProgressStats();
         }
-
+        
         function updateCountdown() {
-            const now = new Date();
-            const currentYearInTz = new Date(now.getTime() + (selectedTimezoneOffset * 3600000)).getUTCFullYear();
-            const thisYearStart = new Date(Date.UTC(currentYearInTz, 0, 1) - selectedTimezoneOffset * 3600000);
-            const diffFromNewYear = now - thisYearStart;
+            const now = getCurrentSyncedTime();
             
-            if (diffFromNewYear >= 0 && diffFromNewYear < FIREWORKS_DURATION) {
+            const nowInSelectedTz = new Date(now.toLocaleString("en-US", { timeZone: selectedTimezone }));
+            const currentYearInTz = nowInSelectedTz.getFullYear();
+            
+            if (nowInSelectedTz.getMonth() === 0 && nowInSelectedTz.getDate() === 1 && (now.getTime() - new Date(Date.parse(new Date(currentYearInTz, 0, 1).toLocaleString("en-US", { timeZone: selectedTimezone }))).getTime()) < FIREWORKS_DURATION) {
                 if (!fireworksAnimationId) launchFireworks();
                 if (!document.getElementById('new-year-message')) {
                     countdownContainer.innerHTML = `<div id="new-year-message">🎉 HAPPY NEW YEAR! 🎉</div>`;
@@ -582,8 +901,11 @@
                 if (fireworksAnimationId && !isStoppingFireworks && !isTestFireworks) {
                     stopFireworks();
                 }
-                const targetDate = getTargetDate();
-                const diffToNewYear = targetDate - now;
+                
+                const nextYear = currentYearInTz + 1;
+                const targetDate = new Date(Date.parse(new Date(nextYear, 0, 1).toLocaleString("en-US", { timeZone: selectedTimezone })));
+                const diffToNewYear = targetDate.getTime() - now.getTime();
+                
                 if (document.getElementById('new-year-message') || !document.getElementById('countdown')) {
                     countdownContainer.innerHTML = `
                         <h2 id="countdown-title">新年まであと</h2>
@@ -622,16 +944,16 @@
         }
 
         function updateProgressStats() {
-            const now = new Date();
-            const nowUtc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const nowInSelectedTz = new Date(nowUtc + (selectedTimezoneOffset * 3600000));
-
+            if (!selectedTimezone) return;
+            const now = getCurrentSyncedTime();
+            const nowInSelectedTz = new Date(now.toLocaleString("en-US", { timeZone: selectedTimezone }));
             const year = nowInSelectedTz.getFullYear();
-            const startOfYear = new Date(Date.UTC(year, 0, 1) - selectedTimezoneOffset * 3600000);
-            const startOfNextYear = new Date(Date.UTC(year + 1, 0, 1) - selectedTimezoneOffset * 3600000);
+
+            const startOfYear = new Date(Date.parse(new Date(year, 0, 1).toLocaleString("en-US", { timeZone: selectedTimezone })));
+            const startOfNextYear = new Date(Date.parse(new Date(year + 1, 0, 1).toLocaleString("en-US", { timeZone: selectedTimezone })));
             
-            const totalMsInYear = startOfNextYear - startOfYear;
-            const elapsedMs = now - startOfYear;
+            const totalMsInYear = startOfNextYear.getTime() - startOfYear.getTime();
+            const elapsedMs = now.getTime() - startOfYear.getTime();
             
             let percentage = (elapsedMs / totalMsInYear) * 100;
             
@@ -673,7 +995,6 @@
             updateCountdown();
         }
 
-        // 修正点: 新年をテストするための関数を追加
         function testNewYearSequence() {
             testFireworksBtn.disabled = true;
             testNewYearBtn.disabled = true;
@@ -796,7 +1117,12 @@
         }
 
         function setupEventListeners() {
-            timezoneSelect.addEventListener('change', () => { selectedTimezoneOffset = parseInt(timezoneSelect.value); setupIntervals(); });
+            timezoneSelect.addEventListener('change', () => { 
+                const newTimezone = timezoneSelect.value;
+                if (newTimezone !== selectedTimezone) {
+                    syncTimeWithServer(newTimezone);
+                }
+            });
             currentTimePrecisionSelect.addEventListener('change', setupIntervals);
             countdownPrecisionSelect.addEventListener('change', setupIntervals);
             fireworksCountdownPrecisionSelect.addEventListener('change', setupFireworksCountdownInterval);
@@ -818,14 +1144,25 @@
                 updateProgressStats();
             });
             
-            // 修正点: 新しいボタンのイベントリスナーを追加
             testNewYearBtn.addEventListener('click', testNewYearSequence);
+            
+            // Modal event listeners
+            offsetInfoBtn.addEventListener('click', () => {
+                offsetModal.classList.add('visible');
+                offsetModalBackdrop.classList.add('visible');
+            });
+            const closeModal = () => {
+                offsetModal.classList.remove('visible');
+                offsetModalBackdrop.classList.remove('visible');
+            };
+            modalCloseBtn.addEventListener('click', closeModal);
+            offsetModalBackdrop.addEventListener('click', closeModal);
         }
 
-        function init() {
-            populateTimezones();
+        async function init() {
             setupEventListeners();
-            setupIntervals();
+            await populateTimezones();
+            await syncTimeWithServer();
             updateProgressStats();
         }
 
