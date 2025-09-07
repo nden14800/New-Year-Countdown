@@ -78,14 +78,12 @@
             padding: 25px 30px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            /* 修正点: カードの最大幅を2倍にする */
             max-width: 760px;
             width: 100%;
             border: 1px solid var(--border-color);
             transition: opacity 0.4s ease, transform 0.4s ease;
-            /* 修正点: スクロール機能を実装 */
-            max-height: 90vh; /* 画面高の90%を上限とする */
-            overflow-y: auto; /* コンテンツがはみ出たらスクロールバーを表示 */
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         .container.hidden {
@@ -235,7 +233,6 @@
         
         .progress-stats {
             display: grid;
-            /* 修正点: 横幅が広がったためレイアウトを戻す */
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
         }
@@ -331,10 +328,14 @@
             color: white;
             border: none;
             font-weight: 700;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+        .button-group button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
-        .button-group button:hover {
+        .button-group button:hover:not(:disabled) {
             opacity: 0.85;
         }
 
@@ -469,6 +470,8 @@
         
         <div class="button-group">
             <button id="test-fireworks-btn">花火をテストする</button>
+            <!-- 修正点: 新しいボタンを追加 -->
+            <button id="test-new-year-btn">新年をテストする</button>
         </div>
     </div>
 
@@ -495,7 +498,6 @@
         const fireworksCountdownDisplayEl = document.getElementById('fireworks-countdown-display');
         const fireworksCountdownSettingEl = document.getElementById('fireworks-countdown-setting');
         const fireworksCountdownPrecisionSelect = document.getElementById('fireworks-countdown-precision');
-
         const progressModeToggle = document.getElementById('progress-mode-toggle');
         const yearPercentageValueEl = document.getElementById('year-percentage-value');
         const yearPercentageLabelEl = document.getElementById('year-percentage-label');
@@ -505,6 +507,9 @@
         const yearFractionLabelEl = document.getElementById('year-fraction-label');
         const fractionDigitsSlider = document.getElementById('fraction-digits-slider');
         const fractionDigitsDisplay = document.getElementById('fraction-digits-display');
+        
+        // 修正点: 新しいボタンのDOM要素を取得
+        const testNewYearBtn = document.getElementById('test-new-year-btn');
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -595,11 +600,11 @@
         
         function updateCountdownDisplay(diff) {
             const [_, precision] = countdownPrecisionSelect.value.split(',').map(Number);
-            const s = (diff % 60000) / 1000;
+            const s = Math.max(0, (diff % 60000) / 1000);
             if (document.getElementById('days')) {
-                document.getElementById('days').textContent = String(Math.floor(diff / 86400000)).padStart(2, '0');
-                document.getElementById('hours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
-                document.getElementById('minutes').textContent = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+                document.getElementById('days').textContent = String(Math.floor(Math.max(0, diff) / 86400000)).padStart(2, '0');
+                document.getElementById('hours').textContent = String(Math.floor(Math.max(0, diff % 86400000) / 3600000)).padStart(2, '0');
+                document.getElementById('minutes').textContent = String(Math.floor(Math.max(0, diff % 3600000) / 60000)).padStart(2, '0');
                 document.getElementById('seconds').textContent = s.toFixed(precision).padStart(2 + (precision > 0 ? 1 : 0) + precision, '0');
             }
         }
@@ -666,6 +671,51 @@
             countdownInterval = setInterval(updateCountdown, countdownRate);
             updateCurrentTime();
             updateCountdown();
+        }
+
+        // 修正点: 新年をテストするための関数を追加
+        function testNewYearSequence() {
+            testFireworksBtn.disabled = true;
+            testNewYearBtn.disabled = true;
+            testNewYearBtn.textContent = '新年テスト中...';
+
+            clearInterval(currentTimeInterval);
+            clearInterval(countdownInterval);
+
+            const testDuration = 5000;
+            const testStartTime = Date.now();
+            
+            const testInterval = setInterval(() => {
+                const elapsed = Date.now() - testStartTime;
+                const remaining = testDuration - elapsed;
+
+                if (remaining > 0) {
+                    if (document.getElementById('new-year-message')) {
+                         countdownContainer.innerHTML = `
+                            <h2 id="countdown-title">新年まであと</h2>
+                            <div id="countdown">
+                                <div class="time-unit"><span class="number" id="days">0</span><span class="label">日</span></div>
+                                <div class="time-unit"><span class="number" id="hours">0</span><span class="label">時間</span></div>
+                                <div class="time-unit"><span class="number" id="minutes">0</span><span class="label">分</span></div>
+                                <div class="time-unit"><span class="number" id="seconds">0</span><span class="label">秒</span></div>
+                            </div>`;
+                    }
+                    updateCountdownDisplay(remaining);
+                } else {
+                    clearInterval(testInterval);
+
+                    countdownContainer.innerHTML = `<div id="new-year-message">🎉 HAPPY NEW YEAR! 🎉</div>`;
+                    launchFireworks(true);
+
+                    const testFireworksDuration = 15000;
+                    setTimeout(() => {
+                        setupIntervals();
+                        testFireworksBtn.disabled = false;
+                        testNewYearBtn.disabled = false;
+                        testNewYearBtn.textContent = '新年をテストする';
+                    }, testFireworksDuration + 1000);
+                }
+            }, 10); 
         }
 
         class Firework {
@@ -767,6 +817,9 @@
                 fractionDigitsDisplay.textContent = fractionDigitsSlider.value;
                 updateProgressStats();
             });
+            
+            // 修正点: 新しいボタンのイベントリスナーを追加
+            testNewYearBtn.addEventListener('click', testNewYearSequence);
         }
 
         function init() {
